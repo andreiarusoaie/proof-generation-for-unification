@@ -1,3 +1,17 @@
+(* 
+The purpose of this file is to check some proofs presented in a research paper 
+on unification in the context of Matching Logic.
+
+The contents of this file:
+1. The syntax of Matching Logic formulae (patterns): line 25
+2. Substitution function and helper lemmas : line 73
+3. Axiomatisation of Definedness, Totality, Membership, Equality: line 54
+4. Axioms and rules of a sub-proof system of Matching Logic: line 152
+5. Helper lemmas and theorems, intermediate results: line 194
+6. The main paper proofs: line 659
+*)
+
+
 Require Import String.
 Require Import List.
 Require Import ZArith.
@@ -19,39 +33,44 @@ Inductive Pattern :=
 Notation "¬ A" := (not A) (at level 80).
 Notation "A ∧ B" := (and A B) (at level 81).
 
-(* Other (allowed) syntactical connectives in ML *)
+(* Other (allowed) syntactical connectives in ML are axiomatised. *)
 Parameter or : Pattern -> Pattern -> Pattern.
 Notation "A ∨ B" := (or A B) (at level 82).
+Axiom or_and : forall A B, (A ∧ B) = ¬ (¬ A ∨ ¬ B).
+
 Parameter implies : Pattern -> Pattern -> Pattern.
 Notation "A → B" := (implies A B) (at level 84).
+Axiom implies_or : forall A B, (A → B) = ¬ A ∨ B.
+
 Parameter equiv : Pattern -> Pattern -> Pattern.
 Notation "A ↔ B" := (equiv A B) (at level 83).
+Axiom equivalence : forall A B, (A ↔ B) = ((A → B) ∧ (B → A)).
+
 Parameter Top : Pattern.
 Notation "⊤" := (Top).
 
-(* Agreed axioms for syntactical connectives *)
-Axiom or_and : forall A B, (A ∧ B) = ¬ (¬ A ∨ ¬ B).
-Axiom implies_or : forall A B, (A → B) = ¬ A ∨ B.
-Axiom equivalence : forall A B, (A ↔ B) = ((A → B) ∧ (B → A)).
 
-(* Definedness, Totality, Membership, Equality *)
+
+(* Definedness, Totality, Membership, Equality are also axiomatised. *)
+(* These axioms are in fact trivial lemma in our term pattern setting. *)
 Parameter definedness : Pattern -> sort -> sort -> Pattern.
 Notation "⌈ A ⌉ " := (definedness A s₁ s₂) (at level 90).
+
 Definition totality (φ : Pattern) (s₁ s₂ : string) : Pattern :=  ¬ ⌈ ¬ φ ⌉.
 Notation "⌊ A ⌋ " := (totality A s₁ s₂) (at level 90).
+
 Definition equal (φ φ' : Pattern) : Pattern := ⌊ φ ↔ φ' ⌋.
 Notation "A == B" := (equal A B) (at level 80).
 Axiom equal_symmetry: forall A B, (A == B) = (B == A).
-
-(* These hold in our term pattern setting *)
 Axiom equal_equiv: forall φ φ', (φ ↔ φ') = (φ == φ').
+
 Definition membership (φ φ' : Pattern) : Pattern := ⌈ φ ∧ φ' ⌉.
 Notation "A ∈ B" := (membership A B) (at level 80).
 Lemma membership_helper: forall A B, (⌈ A ∧ B ⌉) = (A ∈ B).
 Proof. intros. unfold membership. reflexivity. Qed.
 
 
-(* Substitution function *)
+(* Substitution functions and helpers. *)
 Fixpoint substitution' (h : nat) (φ' : Pattern) (x : string) (φ : Pattern) : Pattern :=
   match h with
   | O => φ
@@ -127,8 +146,12 @@ Proof.
     simpl. rewrite H1. reflexivity.
 Qed.
 
+
+
+
 (* ******************************************************************************* *)
-(* Axioms and Rules of the ML proof system: only a sub-proof system is shown here. *)
+(* Axioms and Rules of the ML proof system: only a subset of the rules of the      *)
+(* ML proof system are used.                                                       *)
 (* ******************************************************************************* *)
 Inductive step (Γ : list Pattern) (φ : Pattern) : Prop :=
 | premise : In φ Γ -> step Γ φ
@@ -168,7 +191,9 @@ Axiom equal_refl: forall Γ φ,
 
 
 
-(* helpers *)
+(* ******************************************************************************* *)
+(* Helper lemmas and theorems                                                      *)
+(* ******************************************************************************* *)
 Lemma conjunction_as_implication : forall Γ φ φ',
     Γ ⊢ ¬ (φ → ¬ φ') <-> Γ ⊢ φ ∧ φ'.
 Proof.
@@ -622,6 +647,11 @@ Proof.
   rewrite <- equivalence.
   assumption.
 Qed.
+
+(* ******************************************************************************* *)
+(* End helper lemmas and theorems                                                  *)
+(* ******************************************************************************* *)
+
 
 
 
